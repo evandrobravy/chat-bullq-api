@@ -1,16 +1,26 @@
 import { Injectable, Logger } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { Channel } from '@prisma/client';
 import axios, { AxiosInstance } from 'axios';
 
 @Injectable()
 export class ZappfyHttpClient {
-  private static readonly BASE_URL = 'https://api.zappfy.io';
+  private static readonly DEFAULT_BASE_URL = 'https://api.zappfy.io';
   private readonly logger = new Logger(ZappfyHttpClient.name);
+
+  constructor(private readonly config: ConfigService) {}
+
+  private get baseUrl(): string {
+    return (
+      this.config.get<string>('ZAPPFY_API_URL') ??
+      ZappfyHttpClient.DEFAULT_BASE_URL
+    );
+  }
 
   private createClient(channel: Channel): AxiosInstance {
     const config = channel.config as Record<string, any>;
     return axios.create({
-      baseURL: ZappfyHttpClient.BASE_URL,
+      baseURL: this.baseUrl,
       headers: { token: config.token },
       timeout: 30000,
     });
